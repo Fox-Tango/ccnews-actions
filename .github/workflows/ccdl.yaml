@@ -1,14 +1,79 @@
 on:
   workflow_dispatch:
+    inputs:
+      years:
+        description: Years to process (JSON list of integers)
+        default: '[2017]'
+        required: true
+      months:
+        description: Months to process (JSON list of integers)
+        default: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]'
+        required: true
+      cohort_count:
+        description: Count of cohorts to process (integer)
+        default: 20
+        required: true
+        type: number
+      cohorts:
+        description: Cohorts to process (JSON list of integers)
+        default: '[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]'
+        required: true
 
 jobs:
+
   ccdl:
     strategy:
-      max-parallel: 12
+      max-parallel: 20
       fail-fast: false
       matrix:
-        year: [2017, 2018, 2019, 2020, 2021, 2022]
-        month: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        year: ${{ fromJSON(inputs.years) }}
+        month: ${{ fromJSON(inputs.months) }}
+        cohort: ${{ fromJSON(inputs.cohorts) }}
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+    name: CC-NEWS (${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }})
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        repository: Fox-Tango/ccnews
+        token: ${{ secrets.GH_PAT }}
+    - name: Install prerequisites
+      run: |
+        sh tools/setup-tools.sh
+    - name: Process CC-NEWS (${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }})
+      run: |
+        # echo ${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }} > ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
+        tools/miniconda/bin/python tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --warc-date-range=${{ matrix.year }}-${{ matrix.month }}-1,${{ matrix.year }}-${{ matrix.month }}-1 ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
+    - name: Upload partial database
+      uses: actions/upload-artifact@v3
+      with:
+        name: partial
+        path: ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
+
+  release:
+    needs: ccdl
     runs-on: ubuntu-latest
     steps:
-      - run: echo ${{ matrix.year }}-${{ matrix.month }}
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        repository: Fox-Tango/ccnews
+        token: ${{ secrets.GH_PAT }}
+    - name: Install prerequisites
+      run: |
+        sh tools/setup-tools.sh
+    - name: Download partial databases
+      uses: actions/download-artifact@v3
+      with:
+        name: partial
+    - name: Merge partial databases
+      run: |
+        # cat ccnews-*.sqlite > ccnews.sqlite
+        tools/miniconda/bin/python tools/mergedb.py --table=ccindex,files ccnews-*.sqlite ccnews.sqlite
+    - name: Upload merged database
+      uses: actions/upload-artifact@v3
+      with:
+        name: merged
+        path: ccnews.sqlite
