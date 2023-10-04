@@ -1,3 +1,5 @@
+name: CC-NEWS
+
 on:
   workflow_dispatch:
     inputs:
