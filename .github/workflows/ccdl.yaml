@@ -49,11 +49,11 @@ jobs:
         token: ${{ secrets.GH_PAT }}
     - name: Install prerequisites
       run: |
-        sh tools/setup-tools.sh
+        pip install -r tools/requirements.txt
     - name: Process CC-NEWS ${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}
       run: |
         # echo ${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }} > ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
-        tools/miniconda/bin/python tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range=${{ inputs.date_range }} --warc-date-range=${{ matrix.year }}-${{ matrix.month }}-1,${{ matrix.year }}-${{ matrix.month }}-1 --warc-cohort=${{ matrix.cohort }},${{ inputs.cohort_count }} ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
+        tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range=${{ inputs.date_range }} --warc-date-range=${{ matrix.year }}-${{ matrix.month }}-1,${{ matrix.year }}-${{ matrix.month }}-1 --warc-cohort=${{ matrix.cohort }},${{ inputs.cohort_count }} ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
     - name: Upload partial database
       uses: actions/upload-artifact@v3
       with:
@@ -80,7 +80,7 @@ jobs:
     - name: Merge partial databases
       run: |
         # cat ccnews-*.sqlite > ccnews.sqlite
-        tools/miniconda/bin/python tools/mergedb.py --table=ccindex,files ccnews-*.sqlite ccnews.sqlite
+        tools/mergedb.py --table=ccindex,files ccnews-*.sqlite ccnews.sqlite
     - name: Upload merged database
       uses: actions/upload-artifact@v3
       with:
