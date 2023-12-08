@@ -72,7 +72,7 @@ jobs:
         token: ${{ secrets.GH_PAT }}
     - name: Install prerequisites
       run: |
-        sh tools/setup-tools.sh
+        pip install -r tools/requirements.txt
     - name: Download partial databases
       uses: actions/download-artifact@v3
       with:
