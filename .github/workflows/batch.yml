@@ -1,4 +1,4 @@
-name: CC-NEWS
+name: Batch CC-NEWS
 
 on:
   workflow_dispatch:
@@ -22,7 +22,7 @@ on:
         required: true
       date_range:
         description: Allowed article date range (pair of dates)
-        default: '2017-1-1,2022-12-31'
+        default: '2017-1,2022-12'
         required: true
 
 run-name: CC-NEWS ${{ inputs.years }} x ${{ inputs.months }}
@@ -53,7 +53,7 @@ jobs:
     - name: Process CC-NEWS ${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}
       run: |
         # echo ${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }} > ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
-        tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range=${{ inputs.date_range }} --warc-date-range=${{ matrix.year }}-${{ matrix.month }}-1,${{ matrix.year }}-${{ matrix.month }}-1 --warc-cohort=${{ matrix.cohort }},${{ inputs.cohort_count }} ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
+        tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range=${{ inputs.date_range }} --warc-date-range=${{ matrix.year }}-${{ matrix.month }},${{ matrix.year }}-${{ matrix.month }} --warc-cohort=${{ matrix.cohort }},${{ inputs.cohort_count }} ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
     - name: Upload partial database
       uses: actions/upload-artifact@v3
       with:

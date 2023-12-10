@@ -1,0 +1,78 @@
+name: Daily CC-NEWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      date_range:
+        description: Allowed article date range (pair of dates)
+        default: 'yesterday'
+        required: true
+  # schedule:
+  # - cron: '30 21 * * 1-5'
+
+run-name: CC-NEWS ${{ inputs.date_range }}
+
+jobs:
+
+  ccdl:
+    strategy:
+      max-parallel: 20
+      fail-fast: false
+      matrix:
+        cohort: ${{ fromJSON(inputs.cohorts) }}
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+    name: CC-NEWS ${{ inputs.date_range }}-C${{ matrix.cohort }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        repository: Fox-Tango/ccnews
+        token: ${{ secrets.GH_PAT }}
+    - name: Install prerequisites
+      run: |
+        pip install -r tools/requirements.txt
+    - name: Process CC-NEWS ${{ inputs.date_range }}-C${{ matrix.cohort }}
+      run: |
+        date_range="${{ inputs.date_range }}"
+        date_range="${date_range:-yesterday}"
+        if [[ "$date_range" == "yesterday" ]]; then
+          y=$(date -d "yesterday" '+%Y-%m-%d')
+          date_range="$y,$y"
+        fi
+        if tools/sp500.py srcdata; then
+          tools/sp500-filter.py srcdata
+        fi
+        tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range="$date_range" --warc-date-range="$date_range" --warc-cohort=${{ matrix.cohort }},${{ inputs.cohort_count }} ccnews-${{ inputs.date_range }}-C${{ matrix.cohort }}.sqlite
+    - name: Upload partial database
+      uses: actions/upload-artifact@v3
+      with:
+        name: partial
+        path: ccnews-${{ inputs.date_range }}-C${{ matrix.cohort }}.sqlite
+
+  release:
+    needs: ccdl
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        repository: Fox-Tango/ccnews
+        token: ${{ secrets.GH_PAT }}
+    - name: Install prerequisites
+      run: |
+        pip install -r tools/requirements.txt
+    - name: Download partial databases
+      uses: actions/download-artifact@v3
+      with:
+        name: partial
+    - name: Merge partial databases
+      run: |
+        tools/mergedb.py --table=ccindex,files ccnews-*.sqlite ccnews.sqlite
+    - name: Upload merged database
+      uses: actions/upload-artifact@v3
+      with:
+        name: merged
+        path: ccnews.sqlite
