@@ -7,8 +7,8 @@ on:
         description: Allowed article date range (pair of dates)
         default: 'yesterday'
         required: true
-  # schedule:
-  # - cron: '30 21 * * 1-5'
+  schedule:
+  - cron: '30 5 * * *'
 
 run-name: CC-NEWS ${{ inputs.date_range || 'yesterday' }}
 
