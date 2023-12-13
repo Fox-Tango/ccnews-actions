@@ -25,7 +25,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GH_PAT }}
     outputs:
-      DATE_RANGE: ${{ steps.environment.outputs.DATE_RANGE }}
+      DATE_RANGE: ${{ steps.main.outputs.DATE_RANGE }}
     name: CC-NEWS ${{ inputs.date_range || 'yesterday' }}-C${{ matrix.cohort }}
     steps:
     - name: Checkout
@@ -37,6 +37,7 @@ jobs:
       run: |
         pip install -r tools/requirements.txt
     - name: Process CC-NEWS ${{ inputs.date_range || 'yesterday' }}-C${{ matrix.cohort }}
+      id: main
       run: |
         date_range="${{ inputs.date_range || 'yesterday' }}"
         if [[ "$date_range" == "yesterday" ]]; then
