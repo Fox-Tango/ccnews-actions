@@ -80,5 +80,5 @@ jobs:
     - name: Upload merged database
       uses: actions/upload-artifact@v3
       with:
-        name: merged-${{ env.DATE_RANGE }}
+        name: daily-${{ env.DATE_RANGE }}
         path: ccnews.sqlite
