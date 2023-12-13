@@ -43,7 +43,7 @@ jobs:
           y=$(date -d "yesterday" '+%Y-%m-%d')
           date_range="$y,$y"
         fi
-        echo DATE_RANGE=$DATE_RANGE >>$GITHUB_OUTPUT
+        echo DATE_RANGE=$date_range >>$GITHUB_OUTPUT
         if tools/sp500.py srcdata; then
           tools/sp500-filter.py srcdata
         fi
