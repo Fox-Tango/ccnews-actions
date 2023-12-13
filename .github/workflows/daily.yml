@@ -59,7 +59,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     env:
-      DATE_RANGE: ${{ needs.build.outputs.DATE_RANGE }}
+      DATE_RANGE: ${{ needs.ccdl.outputs.DATE_RANGE }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
