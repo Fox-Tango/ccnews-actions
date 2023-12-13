@@ -10,7 +10,7 @@ on:
   # schedule:
   # - cron: '30 21 * * 1-5'
 
-run-name: CC-NEWS ${{ inputs.date_range }}
+run-name: CC-NEWS ${{ inputs.date_range || 'yesterday' }}
 
 jobs:
 
@@ -24,7 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-    name: CC-NEWS ${{ inputs.date_range }}-C${{ matrix.cohort }}
+    outputs:
+      DATE_RANGE: ${{ steps.environment.outputs.DATE_RANGE }}
+    name: CC-NEWS ${{ inputs.date_range || 'yesterday' }}-C${{ matrix.cohort }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -34,28 +36,30 @@ jobs:
     - name: Install prerequisites
       run: |
         pip install -r tools/requirements.txt
-    - name: Process CC-NEWS ${{ inputs.date_range }}-C${{ matrix.cohort }}
+    - name: Process CC-NEWS ${{ inputs.date_range || 'yesterday' }}-C${{ matrix.cohort }}
       run: |
-        date_range="${{ inputs.date_range }}"
-        date_range="${date_range:-yesterday}"
+        date_range="${{ inputs.date_range || 'yesterday' }}"
         if [[ "$date_range" == "yesterday" ]]; then
           y=$(date -d "yesterday" '+%Y-%m-%d')
           date_range="$y,$y"
         fi
+        echo DATE_RANGE=$DATE_RANGE >>$GITHUB_OUTPUT
         if tools/sp500.py srcdata; then
           tools/sp500-filter.py srcdata
         fi
-        tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range="$date_range" --warc-date-range="$date_range" --warc-cohort=${{ matrix.cohort }},${{ matrix.cohort_count }} ccnews-${{ inputs.date_range }}-C${{ matrix.cohort }}.sqlite
+        tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range="$date_range" --warc-date-range="$date_range" --warc-cohort=${{ matrix.cohort }},${{ matrix.cohort_count }} ccnews-${{ inputs.date_range || 'yesterday' }}-C${{ matrix.cohort }}.sqlite
     - name: Upload partial database
       uses: actions/upload-artifact@v3
       with:
         name: partial
-        path: ccnews-${{ inputs.date_range }}-C${{ matrix.cohort }}.sqlite
+        path: ccnews-${{ inputs.date_range || 'yesterday' }}-C${{ matrix.cohort }}.sqlite
 
   release:
     needs: ccdl
     if: always()
     runs-on: ubuntu-latest
+    env:
+      DATE_RANGE: ${{ needs.build.outputs.DATE_RANGE }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -75,5 +79,5 @@ jobs:
     - name: Upload merged database
       uses: actions/upload-artifact@v3
       with:
-        name: merged
+        name: merged-${{ env.DATE_RANGE }}
         path: ccnews.sqlite
