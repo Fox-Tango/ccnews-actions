@@ -77,8 +77,9 @@ jobs:
     - name: Merge partial databases
       run: |
         tools/mergedb.py --table=ccindex,files ccnews-*.sqlite ccnews.sqlite
+        tools/cc2csv.py ccnews.sqlite data
     - name: Upload merged database
       uses: actions/upload-artifact@v3
       with:
         name: daily+${{ env.DATE_RANGE }}
-        path: ccnews.sqlite
+        path: data/
