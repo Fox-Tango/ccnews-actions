@@ -100,9 +100,11 @@ jobs:
   keepalive:
     needs: release
     if: always()
-    runs-on: ubuntu-latest
     permissions:
       actions: write
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
     - name: Keep workflow alive
       run: |
