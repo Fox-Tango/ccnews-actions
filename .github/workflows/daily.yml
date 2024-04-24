@@ -100,6 +100,7 @@ jobs:
   keepalive:
     needs: release
     if: always()
+    runs-on: ubuntu-latest
     permissions:
       actions: write
     steps:
