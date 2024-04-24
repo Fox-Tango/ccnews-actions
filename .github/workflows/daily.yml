@@ -96,3 +96,12 @@ jobs:
       with:
         name: daily+${{ env.DATE_RANGE }}
         path: daily/
+    - name: Keep workflow alive
+      if: always()
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        WORKFLOW="${{ github.workflow_ref }}"
+        WORKFLOW="${WORKFLOW%@*}"
+        WORKFLOW="${WORKFLOW##*/}"
+        gh api -X PUT repos/${{ github.repository }}/actions/workflows/$WORKFLOW/enable
