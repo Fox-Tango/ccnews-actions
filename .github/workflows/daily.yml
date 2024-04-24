@@ -7,6 +7,15 @@ on:
         description: Allowed article date range (pair of dates)
         default: 'yesterday'
         required: true
+      cohort_count:
+        description: Count of cohorts to process (integer)
+        default: 5
+        required: true
+        type: number
+      cohorts:
+        description: Cohorts to process (JSON list of integers)
+        default: '[0, 1, 2, 3, 4]'
+        required: true
   schedule:
   - cron: '30 5 * * *'
 
@@ -19,8 +28,7 @@ jobs:
       max-parallel: 20
       fail-fast: false
       matrix:
-        cohort_count: [5]
-        cohort: [0, 1, 2, 3, 4]
+        cohort: ${{ fromJSON(inputs.cohorts) }}
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GH_PAT }}
@@ -48,7 +56,7 @@ jobs:
         if tools/sp500.py srcdata; then
           tools/sp500-filter.py srcdata
         fi
-        tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range="$date_range" --warc-date-range="$date_range" --warc-cohort=${{ matrix.cohort }},${{ matrix.cohort_count }} ccnews-${{ inputs.date_range || 'yesterday' }}-C${{ matrix.cohort }}.sqlite
+        tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range="$date_range" --warc-date-range="$date_range" --warc-cohort=${{ matrix.cohort }},${{ inputs.cohort_count }} ccnews-${{ inputs.date_range || 'yesterday' }}-C${{ matrix.cohort }}.sqlite
     - name: Upload partial database
       uses: actions/upload-artifact@v3
       with:
