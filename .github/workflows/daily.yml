@@ -96,10 +96,14 @@ jobs:
       with:
         name: daily+${{ env.DATE_RANGE }}
         path: daily/
+
+  keepalive:
+    needs: release
+    if: always()
+    permissions:
+      actions: write
+    steps:
     - name: Keep workflow alive
-      if: always()
-      env:
-        GH_TOKEN: ${{ github.token }}
       run: |
         WORKFLOW="${{ github.workflow_ref }}"
         WORKFLOW="${WORKFLOW%@*}"
