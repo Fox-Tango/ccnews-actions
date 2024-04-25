@@ -28,7 +28,7 @@ jobs:
       max-parallel: 20
       fail-fast: false
       matrix:
-        cohort: ${{ fromJSON(inputs.cohorts) }}
+        cohort: ${{ fromJSON(inputs.cohorts || '[0, 1, 2, 3, 4]') }}
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GH_PAT }}
@@ -56,7 +56,7 @@ jobs:
         if tools/sp500.py srcdata; then
           tools/sp500-filter.py srcdata
         fi
-        tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range="$date_range" --warc-date-range="$date_range" --warc-cohort=${{ matrix.cohort }},${{ inputs.cohort_count }} ccnews-${{ inputs.date_range || 'yesterday' }}-C${{ matrix.cohort }}.sqlite
+        tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range="$date_range" --warc-date-range="$date_range" --warc-cohort=${{ matrix.cohort }},${{ inputs.cohort_count || '5' }} ccnews-${{ inputs.date_range || 'yesterday' }}-C${{ matrix.cohort }}.sqlite
     - name: Upload partial database
       uses: actions/upload-artifact@v3
       with:
