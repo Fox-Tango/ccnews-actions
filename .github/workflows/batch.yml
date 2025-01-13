@@ -37,7 +37,7 @@ jobs:
         year: ${{ fromJSON(inputs.years) }}
         month: ${{ fromJSON(inputs.months) }}
         cohort: ${{ fromJSON(inputs.cohorts) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       GITHUB_TOKEN: ${{ secrets.GH_PAT }}
     name: CC-NEWS ${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}
@@ -63,7 +63,7 @@ jobs:
   release:
     needs: ccdl
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout
       uses: actions/checkout@v3
