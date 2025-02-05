@@ -55,9 +55,9 @@ jobs:
         # echo ${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }} > ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
         tools/ccdl.py --url-filter=@srcdata/url-filter.txt --lang-filter=en --cats-filter=economy --term-filter=@srcdata/sp500-filter.txt --date-range=${{ inputs.date_range }} --warc-date-range=${{ matrix.year }}-${{ matrix.month }},${{ matrix.year }}-${{ matrix.month }} --warc-cohort=${{ matrix.cohort }},${{ inputs.cohort_count }} ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
     - name: Upload partial database
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: partial
+        name: partial-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}
         path: ccnews-${{ matrix.year }}-${{ matrix.month }}-C${{ matrix.cohort }}.sqlite
 
   release:
@@ -74,15 +74,16 @@ jobs:
       run: |
         pip install -r tools/requirements.txt
     - name: Download partial databases
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        name: partial
+        pattern: partial-*
+        merge-multiple: true
     - name: Merge partial databases
       run: |
         # cat ccnews-*.sqlite > ccnews.sqlite
         tools/mergedb.py --table=ccindex,files ccnews-*.sqlite ccnews.sqlite
     - name: Upload merged database
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: merged
         path: ccnews.sqlite
